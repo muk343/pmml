@@ -25,8 +25,8 @@ LD     := g++
 AR     := ar rc
 RANLIB := ranlib
 
-DEBUG_CFLAGS     := -Wall -Wno-format -g -DDEBUG
-RELEASE_CFLAGS   := -Wall -Wno-unknown-pragmas -Wno-format -O3
+DEBUG_CFLAGS     := -std=c++0x -Wall -Wno-format -g -DDEBUG
+RELEASE_CFLAGS   := -std=c++0x -Wall -Wno-unknown-pragmas -Wno-format -O3
 
 LIBS		 :=
 
