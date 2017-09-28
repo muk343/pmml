@@ -1,6 +1,8 @@
 #ifdef TIXML_USE_STL
     #include <iostream>
     #include <sstream>
+    #include <string>
+    #include <stack>
     using namespace std;
 #else
     #include <stdio.h>
@@ -13,12 +15,14 @@
 #endif
 
 #include "tinyxml.h"
+#include "PMMLNode.h"
 
 // ----------------------------------------------------------------------
 // STDOUT dump and indenting utility functions
 // ----------------------------------------------------------------------
 const unsigned int NUM_INDENTS_PER_SPACE=2;
 
+/*
 const char * getIndent( unsigned int numIndents )
 {
     static const char * pINDENT="                                      + ";
@@ -39,6 +43,7 @@ const char * getIndentAlt( unsigned int numIndents )
 
     return &pINDENT[ LENGTH-n ];
 }
+
 
 int dump_attribs_to_stdout(TiXmlElement* pElement, unsigned int indent)
 {
@@ -62,17 +67,160 @@ int dump_attribs_to_stdout(TiXmlElement* pElement, unsigned int indent)
     }
     return i;    
 }
+*/
 
-void dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
+
+void populatePredicate(Node* node, TiXmlElement* pElement) 
 {
-    if ( !pParent ) return;
+    //Just for doubleCheck
+    string nodeTag = "SimplePredicate";
+    string trueTag = "True";
+    if(!pElement || (nodeTag.compare(pElement->Value()) != 0 && trueTag.compare(pElement->Value()) !=0 )) 
+    {
+        cout<<"Expected predicate but didn't get it"<<endl;
+        exit(-1);
+        //nodeToReturn = getNodeDataFromThisNode
+        //Add to the vector here
+    }
+
+    if (nodeTag.compare(pElement->Value()) == 0) {
+        string field = pElement->Attribute("field");
+        string currOperator = pElement->Attribute("operator");
+        string value = pElement->Attribute("value");
+
+        node->predicate_feature = field;
+        node->predicate_operator = currOperator;
+        node->predicate_value = stod(value);
+        //cout<<"The loaded predicate values are field: "<<field<<" "<<" operator: "<<currOperator<<" value:  "<<value;    
+    } else {
+        node->predicate_feature = "true";
+        node->predicate_operator = "true";
+        node->predicate_value = 0.0;
+    }
+
+}
+
+pair<double, double> getScoreDistribution(TiXmlElement* pElement) 
+{
+    TiXmlAttribute* pAttribFirst=pElement->FirstAttribute();
+    TiXmlAttribute* pAttribLast=pElement->LastAttribute();
+
+    double score;
+    double recordCount;
+
+    if (pAttribFirst->QueryDoubleValue(&score)!=TIXML_SUCCESS) 
+    {
+     cout<<"Problem extracting the score value from the node";   
+     exit(-1);
+    } 
+    if (pAttribLast->QueryDoubleValue(&recordCount)!=TIXML_SUCCESS) 
+    {
+     cout<<"Problem extracting the score value from the node";   
+     exit(-1);
+    } 
+
+    pair<double, double> scoreDistribution = make_pair(score, recordCount);
+    return scoreDistribution;
+}
+
+Node* getNodeDataFromThisNode(TiXmlElement* pElement) 
+{
+
+    Node* node = new Node();
+    //Just for doubleCheck
+    string nodeTag = "Node";
+    if(!pElement || nodeTag.compare(pElement->Value()) != 0) 
+    {
+        cout<<"Node sent is not an actual node";
+        exit(-1);
+    } 
+
+    TiXmlAttribute* pAttribFirst=pElement->FirstAttribute();
+    TiXmlAttribute* pAttribLast=pElement->LastAttribute();
+
+    double score;
+    double recordCount;
+
+    if (pAttribFirst->QueryDoubleValue(&score)!=TIXML_SUCCESS) 
+    {
+     cout<<"Problem extracting the score value from the node";   
+     exit(-1);
+    } else
+    {
+        node->score = score;
+    } 
+    if (pAttribLast->QueryDoubleValue(&recordCount)!=TIXML_SUCCESS) 
+    {
+     cout<<"Problem extracting the score value from the node";   
+     exit(-1);
+    } else
+    {
+        node->node_record_count = recordCount;
+    } 
+
+    //Now let's add info about predicate
+    TiXmlElement* pPredicate = pElement->FirstChild()->ToElement();
+    populatePredicate(node, pPredicate);
+
+    vector<double> scoreDistributions;
+    scoreDistributions.resize(5, 0.0);
+    string scoreDistributionTag = "ScoreDistribution";
+    TiXmlNode* pChild;
+    for ( pChild = pElement->FirstChild(); pChild != 0; pChild = pChild->NextSibling()) 
+    {
+        if (scoreDistributionTag.compare(pChild->Value()) == 0) {
+                pair<double, double> p1 = getScoreDistribution(pChild->ToElement());
+                double score = p1.first;
+                double value = p1.second;
+
+                int index = (int)score;
+                scoreDistributions[index] = value;
+        }
+        
+    }
+
+    node->score_distribution = scoreDistributions;
+
+    return node;
+}
+
+Node* subGenerateGraph(TiXmlNode* pParent, unsigned int indent = 0 )
+{
+    //if ( !pParent ) return;
 
     TiXmlNode* pChild;
     TiXmlText* pText;
     int t = pParent->Type();
-    printf( "%s", getIndent(indent));
     int num;
+     
+    Node* rootNode = getNodeDataFromThisNode(pParent->ToElement()); 
 
+    string nodeTag = "Node";
+    //if(pParent->FirstChild)
+    for ( pChild = pParent->FirstChild(); pChild != 0; pChild = pChild->NextSibling()) 
+    {
+        if(nodeTag.compare(pChild->Value()) == 0) {
+            rootNode->addChildNode(subGenerateGraph(pChild));
+        }
+        
+    }
+
+    return rootNode;
+}
+
+
+
+//returns the root of the tree.
+Node* dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
+{
+    if ( !pParent ) return NULL;
+
+    TiXmlNode* pChild;
+    TiXmlText* pText;
+    int t = pParent->Type();
+    //printf( "%s", getIndent(indent));
+    int num;
+/*
     switch ( t )
     {
     case TiXmlNode::TINYXML_DOCUMENT:
@@ -109,70 +257,115 @@ void dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
     default:
         break;
     }
-    printf( "\n" );
-    for ( pChild = pParent->FirstChild(); pChild != 0; pChild = pChild->NextSibling()) 
-    {
-        dump_to_stdout( pChild, indent+1 );
-    }
-}
-
-
-void dump_to_stdout(const char* pFilename)
-{
-    TiXmlDocument doc(pFilename);
-    bool loadOkay = doc.LoadFile();
-    if (loadOkay)
-    {
-        printf("\n%s:\n", pFilename);
-        dump_to_stdout( &doc ); // defined later in the tutorial
-    }
-    else
-    {
-        printf("Failed to load file \"%s\"\n", pFilename);
-    }
-}
-
-/*
-void dump_to_stdout(const char* pFilename)
-{
-    TiXmlDocument doc(pFilename);
-    bool loadOkay = doc.LoadFile();
-    doc.SaveFile("testSave.xml");
     
-   
-    if (loadOkay)
+    */
+    
+    string node = "Node";
+    if(node.compare(pParent->Value()) == 0) 
     {
-        printf("\n%s:\n", pFilename);
-        
-        TiXmlNode * child;
-        for( child = doc.RootElement()->FirstChild(); child; child = child->NextSibling() )
+        //getNodeDataFromThisNode(pParent);
+        Node* rootNode = getNodeDataFromThisNode(pParent->ToElement()); 
+        //nodeToReturn = getNodeDataFromThisNode
+        //Add to the vector here
+        for ( pChild = pParent->FirstChild(); pChild != 0; pChild = pChild->NextSibling()) 
         {
             
+            if(node.compare(pChild->Value()) == 0) {
+                rootNode->addChildNode(subGenerateGraph(pChild));
+            }
+            
         }
-        if (pAttrib) {
-            printf("the value is %s \n", pAttrib->Name());
-        }
-        else 
+
+        return rootNode;
+    } else {
+
+        Node* deepInsertedRootToReturn = NULL;
+        for ( pChild = pParent->FirstChild(); pChild != 0; pChild = pChild->NextSibling()) 
         {
-            printf("no attribute value found \n");
+
+            Node* tempReturnValue = dump_to_stdout(pChild);
+            if (tempReturnValue != NULL)
+            {
+                deepInsertedRootToReturn = tempReturnValue;
+            }
+            
         }
-        //dump_to_stdout( &doc ); // defined later in the tutorial
-        
+
+        return deepInsertedRootToReturn;    
+    }
+
+    
+}
+
+
+Node* dump_to_stdout(const char* pFilename)
+{
+    TiXmlDocument doc(pFilename);
+    bool loadOkay = doc.LoadFile();
+    if (loadOkay)
+    {
+        printf("\n%s:\n", pFilename);
+        return dump_to_stdout( &doc ); // defined later in the tutorial
     }
     else
     {
         printf("Failed to load file \"%s\"\n", pFilename);
+        return NULL;
     }
-    
 }
-*/
+
+void traverse(Node* rootNode) {
+
+    if (rootNode == NULL)
+        return;
+
+    stack<Node *> node_stack;
+    Node *curr = rootNode;
+    
+    while(!node_stack.empty() || curr != NULL) {
+        
+        if(curr) {
+            node_stack.push(curr);
+            if(!curr -> childNodes.empty()) {
+                curr = curr -> childNodes[0];    
+            } else {
+                curr = NULL;
+            }
+            
+        } else {
+            Node *temp = node_stack.top();
+            cout<<"Score is: "<<temp->score<<" recordCount is: "<<temp->node_record_count<<endl;
+
+            node_stack.pop();
+            if(!curr -> childNodes.empty() && curr->childNodes.size() >1 ) {
+                curr = temp -> childNodes[1];
+            
+             } else {
+                 curr = NULL;
+             }
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 {
+    
+    Node* rootNode = NULL;
+    
+
     for (int i=1; i<argc; i++)
     {
-        dump_to_stdout(argv[i]);
+        rootNode = dump_to_stdout(argv[i]);
     }
+
+    if (rootNode != NULL) {
+        cout<<"Root node is not null"<<endl;
+    }
+
+    cout<<"In the innder depths: "<<rootNode->childNodes[0]->childNodes[0]->childNodes[0]->node_record_count<<endl;
+    
+    traverse(rootNode);
+    
     return 0;
 }
 

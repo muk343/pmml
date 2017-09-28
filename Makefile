@@ -15,7 +15,7 @@ PROFILE        := NO
 
 # TINYXML_USE_STL can be used to turn on STL support. NO, then STL
 # will not be used. YES will include the STL files.
-TINYXML_USE_STL := NO
+TINYXML_USE_STL := YES
 
 #****************************************************************************
 
@@ -90,7 +90,7 @@ all: ${OUTPUT}
 # Source files
 #****************************************************************************
 
-SRCS := tinyxml.cpp tinyxmlparser.cpp tryFile.cpp tinyxmlerror.cpp tinystr.cpp
+SRCS := tinyxml.cpp tinyxmlparser.cpp tryFile.cpp tinyxmlerror.cpp tinystr.cpp PMMLNode.cpp
 
 # Add on the sources for libraries
 SRCS := ${SRCS}
@@ -128,3 +128,4 @@ tinyxml.o: tinyxml.h tinystr.h
 tinyxmlparser.o: tinyxml.h tinystr.h
 tryFile.o: tinyxml.h tinystr.h
 tinyxmlerror.o: tinyxml.h tinystr.h
+PMMLNode.o: PMMLNode.h

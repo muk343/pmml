@@ -13,5 +13,4 @@ void Node::addChildNode(Node *child) {
 	childNodes.push_back(child);
 }
 
-
-
+Node::Node() {}
