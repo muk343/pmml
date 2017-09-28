@@ -14,7 +14,9 @@
 
 #include "tinyxml.h"
 
-/*
+// ----------------------------------------------------------------------
+// STDOUT dump and indenting utility functions
+// ----------------------------------------------------------------------
 const unsigned int NUM_INDENTS_PER_SPACE=2;
 
 const char * getIndent( unsigned int numIndents )
@@ -38,6 +40,29 @@ const char * getIndentAlt( unsigned int numIndents )
     return &pINDENT[ LENGTH-n ];
 }
 
+int dump_attribs_to_stdout(TiXmlElement* pElement, unsigned int indent)
+{
+    if ( !pElement ) return 0;
+
+    TiXmlAttribute* pAttrib=pElement->FirstAttribute();
+    int i=0;
+    int ival;
+    double dval;
+    const char* pIndent=getIndent(indent);
+    printf("\n");
+    while (pAttrib)
+    {
+        printf( "%s%s: value=[%s]", pIndent, pAttrib->Name(), pAttrib->Value());
+
+        if (pAttrib->QueryIntValue(&ival)==TIXML_SUCCESS)    printf( " int=%d", ival);
+        if (pAttrib->QueryDoubleValue(&dval)==TIXML_SUCCESS) printf( " d=%1.1f", dval);
+        printf( "\n" );
+        i++;
+        pAttrib=pAttrib->Next();
+    }
+    return i;    
+}
+
 void dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
 {
     if ( !pParent ) return;
@@ -50,11 +75,11 @@ void dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
 
     switch ( t )
     {
-    case TiXmlNode::DOCUMENT:
+    case TiXmlNode::TINYXML_DOCUMENT:
         printf( "Document" );
         break;
 
-    case TiXmlNode::ELEMENT:
+    case TiXmlNode::TINYXML_ELEMENT:
         printf( "Element [%s]", pParent->Value() );
         num=dump_attribs_to_stdout(pParent->ToElement(), indent+1);
         switch(num)
@@ -65,20 +90,20 @@ void dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
         }
         break;
 
-    case TiXmlNode::COMMENT:
+    case TiXmlNode::TINYXML_COMMENT:
         printf( "Comment: [%s]", pParent->Value());
         break;
 
-    case TiXmlNode::UNKNOWN:
+    case TiXmlNode::TINYXML_UNKNOWN:
         printf( "Unknown" );
         break;
 
-    case TiXmlNode::TEXT:
+    case TiXmlNode::TINYXML_TEXT:
         pText = pParent->ToText();
         printf( "Text: [%s]", pText->Value() );
         break;
 
-    case TiXmlNode::DECLARATION:
+    case TiXmlNode::TINYXML_DECLARATION:
         printf( "Declaration" );
         break;
     default:
@@ -90,8 +115,24 @@ void dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
         dump_to_stdout( pChild, indent+1 );
     }
 }
-*/
 
+
+void dump_to_stdout(const char* pFilename)
+{
+    TiXmlDocument doc(pFilename);
+    bool loadOkay = doc.LoadFile();
+    if (loadOkay)
+    {
+        printf("\n%s:\n", pFilename);
+        dump_to_stdout( &doc ); // defined later in the tutorial
+    }
+    else
+    {
+        printf("Failed to load file \"%s\"\n", pFilename);
+    }
+}
+
+/*
 void dump_to_stdout(const char* pFilename)
 {
     TiXmlDocument doc(pFilename);
@@ -102,7 +143,21 @@ void dump_to_stdout(const char* pFilename)
     if (loadOkay)
     {
         printf("\n%s:\n", pFilename);
+        
+        TiXmlNode * child;
+        for( child = doc.RootElement()->FirstChild(); child; child = child->NextSibling() )
+        {
+            
+        }
+        if (pAttrib) {
+            printf("the value is %s \n", pAttrib->Name());
+        }
+        else 
+        {
+            printf("no attribute value found \n");
+        }
         //dump_to_stdout( &doc ); // defined later in the tutorial
+        
     }
     else
     {
@@ -110,6 +165,7 @@ void dump_to_stdout(const char* pFilename)
     }
     
 }
+*/
 
 int main(int argc, char* argv[])
 {
