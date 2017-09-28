@@ -4,7 +4,7 @@
 #include <stack>
 #include <string>
 #include <sstream>
-#include "PMMLNode.h"
+#include "GraphGenerator.h"
 
 using namespace std;
 
@@ -91,6 +91,21 @@ int main()
 		input_vec.push_back(i);
 	}
 	Score s(input_vec);
+
+	GraphGenerator graphGenerator;
+	Node* rootNode = graphGenerator.getRootNode("pmmlModel.xml");
+	s.generateProb(rootNode);
+	//graphGenerator.traverse(rootNode);
+
+	/*
+	cout<<"Number of childs of root nodes: "<<rootNode->childNodes.size()<<endl;
+	Node* rootNodeLeftChild = rootNode->childNodes[0];
+	cout<<"Number of childs of root node left: "<<rootNodeLeftChild->childNodes.size()<<endl;
+	Node* rootNodeRightChild = rootNode->childNodes[1];
+	cout<<"Number of childs of root node right: "<<rootNodeRightChild->childNodes.size()<<endl;
+*/
+	// ->childNodes[0]->node_record_count<<endl;
+	//cout<<"Score of root node: "<<rootNode->score<<endl;
 
 	//cout << s.predicateMap["lessOrEqual"](4, 100) << endl;
 	

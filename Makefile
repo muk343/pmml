@@ -81,7 +81,7 @@ CXXFLAGS := ${CXXFLAGS} ${DEFS}
 # Targets of the build
 #****************************************************************************
 
-OUTPUT := tryFile
+OUTPUT := scorer
 
 all: ${OUTPUT}
 
@@ -90,7 +90,7 @@ all: ${OUTPUT}
 # Source files
 #****************************************************************************
 
-SRCS := tinyxml.cpp tinyxmlparser.cpp tryFile.cpp tinyxmlerror.cpp tinystr.cpp PMMLNode.cpp
+SRCS := tinyxml.cpp tinyxmlparser.cpp GraphGenerator.cpp tinyxmlerror.cpp tinystr.cpp PMMLNode.cpp pmml_score.cpp
 
 # Add on the sources for libraries
 SRCS := ${SRCS}
@@ -126,6 +126,7 @@ depend:
 
 tinyxml.o: tinyxml.h tinystr.h
 tinyxmlparser.o: tinyxml.h tinystr.h
-tryFile.o: tinyxml.h tinystr.h
+GraphGenerator.o: tinyxml.h tinystr.h GraphGenerator.h
 tinyxmlerror.o: tinyxml.h tinystr.h
 PMMLNode.o: PMMLNode.h
+pmml_score.o: PMMLNode.h

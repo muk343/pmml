@@ -15,7 +15,7 @@
 #endif
 
 #include "tinyxml.h"
-#include "PMMLNode.h"
+#include "GraphGenerator.h"
 
 // ----------------------------------------------------------------------
 // STDOUT dump and indenting utility functions
@@ -69,12 +69,7 @@ int dump_attribs_to_stdout(TiXmlElement* pElement, unsigned int indent)
 }
 */
 
-
-class GraphGenerator{
-
-public: 
-
-    void populatePredicate(Node* node, TiXmlElement* pElement) 
+    void GraphGenerator::populatePredicate(Node* node, TiXmlElement* pElement) 
     {
         //Just for doubleCheck
         string nodeTag = "SimplePredicate";
@@ -104,7 +99,7 @@ public:
 
     }
 
-    pair<double, double> getScoreDistribution(TiXmlElement* pElement) 
+    pair<double, double> GraphGenerator::getScoreDistribution(TiXmlElement* pElement) 
     {
         TiXmlAttribute* pAttribFirst=pElement->FirstAttribute();
         TiXmlAttribute* pAttribLast=pElement->LastAttribute();
@@ -127,7 +122,7 @@ public:
         return scoreDistribution;
     }
 
-    Node* getNodeDataFromThisNode(TiXmlElement* pElement) 
+    Node* GraphGenerator::getNodeDataFromThisNode(TiXmlElement* pElement) 
     {
 
         Node* node = new Node();
@@ -188,7 +183,7 @@ public:
         return node;
     }
 
-    Node* subGenerateGraph(TiXmlNode* pParent, unsigned int indent = 0 )
+    Node* GraphGenerator::subGenerateGraph(TiXmlNode* pParent)
     {
         //if ( !pParent ) return;
 
@@ -215,7 +210,7 @@ public:
 
 
     //returns the root of the tree.
-    Node* dump_to_stdout( TiXmlNode* pParent, unsigned int indent = 0 )
+    Node* GraphGenerator::dump_to_stdout( TiXmlNode* pParent)
     {
         if ( !pParent ) return NULL;
 
@@ -302,7 +297,7 @@ public:
     }
 
 
-    Node* dump_to_stdout(const char* pFilename)
+    Node* GraphGenerator::dump_to_stdout(const char* pFilename)
     {
         TiXmlDocument doc(pFilename);
         bool loadOkay = doc.LoadFile();
@@ -318,37 +313,62 @@ public:
         }
     }
 
-    void traverse(Node* rootNode) {
+    // void GraphGenerator::traverse(Node* rootNode) {
 
-        if (rootNode == NULL)
-            return;
+    //     if (rootNode == NULL)
+    //         return;
 
+    //     stack<Node *> node_stack;
+    //     Node *curr = rootNode;
+        
+    //     while(!node_stack.empty() || curr != NULL) {
+            
+    //         if(curr) {
+    //             node_stack.push(curr);
+    //             if(!curr -> childNodes.empty()) {
+    //                 curr = curr -> childNodes[0];    
+    //             } else {
+    //                 curr = NULL;
+    //             }
+                
+    //         } else {
+    //             Node *temp = node_stack.top();
+    //             cout<<"Score is: "<<temp->score<<" recordCount is: "<<temp->node_record_count<<endl;
+
+    //             node_stack.pop();
+    //             if(!curr -> childNodes.empty() && curr->childNodes.size() >1 ) {
+    //                 curr = temp -> childNodes[1];
+                
+    //              } else {
+    //                  curr = NULL;
+    //              }
+    //         }
+    //     }
+    // }
+
+    void GraphGenerator::traverse(Node* rootNode) {
+        
         stack<Node *> node_stack;
         Node *curr = rootNode;
-        
-        while(!node_stack.empty() || curr != NULL) {
-            
-            if(curr) {
-                node_stack.push(curr);
-                if(!curr -> childNodes.empty()) {
-                    curr = curr -> childNodes[0];    
-                } else {
-                    curr = NULL;
-                }
-                
-            } else {
-                Node *temp = node_stack.top();
-                cout<<"Score is: "<<temp->score<<" recordCount is: "<<temp->node_record_count<<endl;
 
-                node_stack.pop();
-                if(!curr -> childNodes.empty() && curr->childNodes.size() >1 ) {
-                    curr = temp -> childNodes[1];
-                
-                 } else {
-                     curr = NULL;
-                 }
+        node_stack.push(curr);
+
+        while(!node_stack.empty()) {
+
+            Node* temp = node_stack.top();
+            node_stack.pop();
+            cout<<"Score is: "<<temp->score<<" recordCount is: "<<temp->node_record_count<<endl;
+            if (temp->childNodes.size() == 1) {
+                cout<<"This has only one child";
+                exit(-1);
+            }
+
+            if (temp->childNodes.size() == 2) {
+                node_stack.push(temp->childNodes[0]);
+                node_stack.push(temp->childNodes[1]);
             }
         }
+
     }
 
 
@@ -374,7 +394,7 @@ public:
     //     return 0;
     // }
 
-    Node* getRootNode(string pFilename)
+    Node* GraphGenerator::getRootNode(const char* pFilename)
     {
         
         Node* rootNode = NULL;
@@ -392,8 +412,6 @@ public:
      
         return rootNode;
     }
-
-}
 
 
 
