@@ -1,10 +1,10 @@
-do the following:
+Execute the following steps to run the scorer program -
 
-do changes in tryFile.cpp
-
-make clean
-make
-
-now tryFile is your executable. Run it as:
-
-./tryFile
+- Sync the project in your local workspace
+- Execute the following commands -
+```sh
+cd pmml
+make clean && make
+./scorer < [Input file ] >[Outputfile]
+```
+- The results will be saved in CSV format in the Outputfile
