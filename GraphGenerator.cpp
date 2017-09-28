@@ -303,7 +303,6 @@ int dump_attribs_to_stdout(TiXmlElement* pElement, unsigned int indent)
         bool loadOkay = doc.LoadFile();
         if (loadOkay)
         {
-            printf("\n%s:\n", pFilename);
             return dump_to_stdout( &doc ); // defined later in the tutorial
         }
         else

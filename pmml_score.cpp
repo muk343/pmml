@@ -38,13 +38,17 @@ class Score {
 
 	void getScore(Node *parent) {
 		if(resPMMLNode != NULL) return;
-		for(int i=0; !(parent -> childNodes.empty()) && i<parent -> childNodes.size(); i++) {
+		for(int i=0; i< parent -> childNodes.size(); i++) {
 			Node *currPMMLNode = parent -> childNodes.at(i);
 			if(isPredicateTrue(currPMMLNode)) {
+				//cout << "predicate true " <<currPMMLNode-> node_record_count << endl;
 				getScore(currPMMLNode);
 			}
 		}
-		resPMMLNode = parent;
+		if(resPMMLNode == NULL) {
+			resPMMLNode = parent;
+		}
+		//cout << "resPMML node record count " << resPMMLNode->node_record_count << endl;
 	}
 
 public:
@@ -54,6 +58,7 @@ public:
 	Score(vector<double> input_vector) {
 		input_vec = input_vector;
 		create_predicate_map();
+		resPMMLNode = NULL;
 	}
 
 	void create_predicate_map() {
@@ -62,18 +67,21 @@ public:
 	}
 
 	vector<double> generateProb(Node* root) {
+		
 		vector<double> result;
 		if(root == NULL) {
 			result.resize(5,0.0);
 			return result;
 		}
+		
 		getScore(root);
+		
 		if(resPMMLNode == NULL) {
 			resPMMLNode = root;
 		}
-
-		for(int i=0; i<resPMMLNode->score_distribution.size(); i++) {
-			double prob = resPMMLNode->score_distribution[i]/resPMMLNode->node_record_count;
+		
+		for(int i=0; i<5; i++) {
+			double prob = (resPMMLNode->score_distribution[i])/(resPMMLNode->node_record_count);
 			result.push_back(prob);
 		}
 
@@ -83,33 +91,30 @@ public:
 
 };
 
-
 int main()
 {
-	vector<double> input_vec;
-	for(int i=0; i<22; i++) {
-		input_vec.push_back(i);
-	}
-	Score s(input_vec);
 
 	GraphGenerator graphGenerator;
-	Node* rootNode = graphGenerator.getRootNode("pmmlModel.xml");
-	s.generateProb(rootNode);
-	//graphGenerator.traverse(rootNode);
+	Node* rootNode = graphGenerator.getRootNode("pmmlModel.xml");	
 
-	/*
-	cout<<"Number of childs of root nodes: "<<rootNode->childNodes.size()<<endl;
-	Node* rootNodeLeftChild = rootNode->childNodes[0];
-	cout<<"Number of childs of root node left: "<<rootNodeLeftChild->childNodes.size()<<endl;
-	Node* rootNodeRightChild = rootNode->childNodes[1];
-	cout<<"Number of childs of root node right: "<<rootNodeRightChild->childNodes.size()<<endl;
-*/
-	// ->childNodes[0]->node_record_count<<endl;
-	//cout<<"Score of root node: "<<rootNode->score<<endl;
+	string line;
+	while (getline(cin, line)) {
+	  	std::istringstream iss(line);
+	  	vector<double> input_vec;
+	  	std::string token;
+    	while(std::getline(iss, token, '\t')) {
+        	input_vec.push_back(stod(token));
+        }
 
-	//cout << s.predicateMap["lessOrEqual"](4, 100) << endl;
-	
-
-    
+        Score s(input_vec);
+		
+		vector<double> res = s.generateProb(rootNode);
+		int size = res.size();
+		cout.precision(12);
+		for(int i=0; i<size-1; i++) {
+			cout << res[i] << ",";
+		}
+		cout << res[size-1] << "\n";
+	}
 
 }
